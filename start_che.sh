@@ -1,9 +1,12 @@
 #!/bin/bash
 
+set -x
+
 #THe first parameter,for now, is the name of the user.
 
 if test -z $1 ; then
 	echo "Failed. No user was entered"
+	echo "Error" >/home/boss/nginx_scripts/status.txt
 	exit 1
 else
 	USER_NAME=$1

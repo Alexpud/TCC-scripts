@@ -1,0 +1,32 @@
+server
+{
+	location   ~* /(\w+)$
+	{
+		#Starts che server
+		content_by_lua_block
+		{
+			local teste = ngx.var.destino
+			ngx.say("hello, world modafacka" .. teste)
+			--io.popen("/home/boss/nginx_scripts/teste.sh")
+			io.popen("/home/boss/nginx_scripts/start_che.sh " .. teste)		
+		}
+		
+		#proxy_pass http://192.168.25.6:$INSTANCE_PORT;			
+	}
+}
+
+server 
+{
+	listen 8082;
+	set $TEST_VARIABLE "Test";
+   	location / 
+   	{
+		default_type text/html;
+     		content_by_lua_block
+		{
+			local test = ngx.var.TESTE_VARIABLE
+      			ngx.say("<p>hello, world modafacka</p>" .. test)
+       		}
+		echo "llol";
+   	}
+}

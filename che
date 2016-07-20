@@ -2,6 +2,7 @@ server
 {
 	location   ~* /(\w+)$
 	{
+		set destino $1;
 		#Starts che server
 		content_by_lua_block
 		{

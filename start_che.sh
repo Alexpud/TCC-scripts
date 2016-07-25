@@ -5,30 +5,30 @@ set -x
 #------------------------------------Paths used in the script-----------------------------------------------#
 
 SCRIPTS_PATH='/home/boss/nginx_scripts'
-CHE_PATH='/home/boss/Desktop/eclipse-che-4.0.1'
+CHE_PATH='/home/boss/Desktop/eclipse-che-4.4.2'
 
 #-----------------------------------------------------------------------------------------------------------#
 
 #------------------------------------First parameter,for now, is the name of the user-----------------------#
 
-if [ $# -lt  2 ]; then
-	echo "Less than 2 arguments were entered"
-	exit 1
-fi
+#if [ $# -lt  2 ]; then
+#	echo "Less than 2 arguments were entered"
+#	exit 1
+#fi
 
 #Checks if the first paramter is specifying the user and the second is not empty
-if [ "$1" =  "--user" ] && [ ! -z $2 ] ; then
+#if [ "$1" =  "--user" ] && [ ! -z $2 ] ; then
 	
-	USER_NAME=$2
+#	USER_NAME=$2
 
-else
+#else
 	
-	echo "Failed; No user was entered"
-	echo "Error" >$SCRIPTS_PATH/status.txt
-	exit 1
-	USER_NAME=$2
+#	echo "Failed; No user was entered"
+#	echo "Error" >$SCRIPTS_PATH/status.txt
+#	exit 1
+#	USER_NAME=$2
 
-fi
+#fi
 
 #----------------------------------------------------------------------------------------------------------#
 

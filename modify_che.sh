@@ -1,11 +1,11 @@
 #!/bin/bash
-#-----------------------------Variables----------------------------------------------------------------------#
-
-echo $(pwd)
+#---------------------------------------Variable---------------------------------------------------------------#
 #Scripts paths
-SCRIPTS_PATH='/home/boss/TCC-scripts'
-HELPERS_PATH=$SCRIPTS_PATH'/helpers'
-CHE_FILES_PATH=$SCRIPTS_PATH'/che_files'
+
+HELPERS_PATH=$(pwd)'/helpers'
+CHE_FILES_PATH=$(pwd)'/che_files'
+
+MACHINE_IP=0
 
 #Default CHE ports values
 CHE_PORT=8080
@@ -38,25 +38,35 @@ function setPorts
 	echo $(expr $INC + 1) > $HELPERS_PATH/data.txt
 }
 
+
+#------------------------------------Obtains the IPV4 address----------------------------------------------#
+function getIP
+{
+	MACHINE_IP=$(ip route get 1 | awk '{print $NF;exit}')
+}
+
+#----------------------------------------------------------------------------------------------------------#
+
+
 #-----------------------------------Modify the che ports values---------------------------------------------#
 
 #Modifies the CHE_PORT variable on the che.sh script to be mounted on the container.The variable sets the default
 #port in which eclipse che will be executed.
 function change_che_port()
 {
-	sed -i 's/CHE_PORT=[0-9]\+/CHE_PORT='$CHE_PORT'/' $CHE_FILES_PATH/che.sh
+	sed -i 's/CHE_PORT=[0-9]\+/CHE_PORT='$CHE_PORT'/' $CHE_FILES_PATH/bin/che.sh
 }
 
 function change_che_server_port()
 {
-	xmlstarlet edit -L -u "/Server/@port" -v "$TOMCAT_SERVER_PORT" $CHE_FILES_PATH/server.xml 
+	xmlstarlet edit -L -u "/Server/@port" -v "$TOMCAT_SERVER_PORT" $CHE_FILES_PATH/conf-tomcat/server.xml 
 }
 #----------------------------------------------------------------------------------------------------------#
 
 #----------------------------------Starts the che container------------------------------------------------#
 function start_che_container()
 {
-
+	docker run --net=host --name $1 -v $CHE_FILES_PATH/workspaces:/home/user/che/workspaces -v $CHE_FILES_PATH/storage:/home/user/che/storage -v $CHE_FILES_PATH/conf:/home/user/che/conf -v $CHE_FILES_PATH/lib:/home/user/che/lib-copy -v /var/run/docker.sock:/var/run/docker.sock -v $CHE_FILES_PATH/conf-tomcat:/home/user/che/tomcat/conf -v $CHE_FILES_PATH/bin:/home/user/che/bin codenvy/che
 }
 
 #----------------------------------------------------------------------------------------------------------#
@@ -67,4 +77,6 @@ else
 	setPorts
 	change_che_port
 	change_che_server_port
+	getIP
+	start_che_container alexandre
 fi

@@ -67,7 +67,7 @@ https://eclipse-che.readme.io/docs/networking."
   USE_DOCKER=false
   USE_VMWARE=false
   CHE_DOCKER_TAG=latest
-  CHE_PORT=8085
+  CHE_PORT=8091
   CHE_LOGS_LEVEL=INFO
   CHE_IP=
   USE_HELP=false
@@ -125,7 +125,7 @@ parse_command_line () {
     ;;
     -p:*|--port:*)
       if [ "${command_line_option#*:}" != "" ]; then
-        abacaxi="${command_line_option#*:}"
+        CHE_PORT="${command_line_option#*:}"
       fi
     ;;
     -r:*|--remote:*)
@@ -198,7 +198,7 @@ parse_command_line () {
     echo "USE_BLOCKING_ENTROPY: ${USE_BLOCKING_ENTROPY}"
     echo "USE_DOCKER: ${USE_DOCKER}"
     echo "CHE_DOCKER_TAG: ${CHE_DOCKER_TAG}"
-    echo "abacaxi: ${CHE_PORT}"
+    echo "CHE_PORT: ${CHE_PORT}"
     echo "CHE_IP: \"${CHE_IP}\""
     echo "LOGGING_LEVEL: ${CHE_LOGS_LEVEL}"
     echo "CHE_DOCKER_MACHINE: ${VM}"
@@ -557,7 +557,7 @@ print_client_connect () {
   echo "
 ############## HOW TO CONNECT YOUR CHE CLIENT ###############
 After Che server has booted, you can connect your clients by:
-1. Open browser to http://${HOST_PRINT_VALUE}:${abacaxi}, or:
+1. Open browser to http://${HOST_PRINT_VALUE}:${CHE_PORT}, or:
 2. Open native chromium app.
 #############################################################
 "
@@ -606,8 +606,8 @@ call_catalina () {
 
   ### Cannot add this in setenv.sh.
   ### We do the port mapping here, and this gets inserted into server.xml when tomcat boots
-  export JAVA_OPTS="${JAVA_OPTS} -Dport.http=${abacaxi} -Dche.home=${CHE_HOME}"
-  export SERVER_PORT=${abacaxi}
+  export JAVA_OPTS="${JAVA_OPTS} -Dport.http=${CHE_PORT} -Dche.home=${CHE_HOME}"
+  export SERVER_PORT=${CHE_PORT}
 
   # Launch the Che application server, passing in command line parameters
   if [[ "${USE_DEBUG}" == true ]]; then
@@ -619,7 +619,7 @@ call_catalina () {
 
 stop_che_server () {
 
-  echo -e "Stopping Che server running on localhost:${abacaxi}"
+  echo -e "Stopping Che server running on localhost:${CHE_PORT}"
   call_catalina >/dev/null 2>&1
   return
 

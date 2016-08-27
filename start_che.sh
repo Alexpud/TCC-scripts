@@ -1,34 +1,11 @@
 #!/bin/bash
 
-set -x
 
 #------------------------------------Paths used in the script-----------------------------------------------#
 
-SCRIPTS_PATH='/home/boss/nginx_scripts'
-CHE_PATH='/home/boss/Desktop/eclipse-che-4.4.2'
+SCRIPTS_PATH=$(pwd)
 
 #-----------------------------------------------------------------------------------------------------------#
-
-#------------------------------------First parameter,for now, is the name of the user-----------------------#
-
-#if [ $# -lt  2 ]; then
-#	echo "Less than 2 arguments were entered"
-#	exit 1
-#fi
-
-#Checks if the first paramter is specifying the user and the second is not empty
-#if [ "$1" =  "--user" ] && [ ! -z $2 ] ; then
-	
-#	USER_NAME=$2
-
-#else
-	
-#	echo "Failed; No user was entered"
-#	echo "Error" >$SCRIPTS_PATH/status.txt
-#	exit 1
-#	USER_NAME=$2
-
-#fi
 
 #----------------------------------------------------------------------------------------------------------#
 
@@ -48,29 +25,71 @@ function setPorts
 {
 	INC=$(cat $SCRIPTS_PATH/data.txt) #Reads the increment value
 	CHE_PORT=$(expr 8080 + $INC) #New Che port
-	TOMCAT_SERVER_PORT=$(expr 8005 + $INC) #New Tomcat port
-	
-	#Sets the new increment value on the txt file
 	echo $(expr $INC + 1) > $SCRIPTS_PATH/data.txt
 }
 
 #----------------------------------------------------------------------------------------------------------#
 
-getIP
-echo $SCRIPTS_PATH
-setPorts
+#----------------------------------Starts the user che container-------------------------------------------#
 
-#Reloads the environment, changing the environment variables values, more specifically, java path.
+function start
+{
+	if [ -d "/home/user/$1" ]; then 
+	  if [ -L "/home/user/$1" ]; then
+	    # It is a symlink!
+	    # Symbolic link specific commands go here.
+	    echo "Error, it is not a directory, it is a symlink.?"
+	  else
+	    # It's a directory!
+	    # Directory command goes here.
+	    echo "Directory already exists. That means the container belonging to $1 already exists, starting the container..."
+	    docker start $1
+	  fi
+	else
+		echo "Attempting to create and run the container"
+		CREATION_RESULT=$( docker run -it -v /var/run/docker.sock:/var/run/docker.sock -e CHE_DATA_FOLDER=/home/user/$1 -e CHE_PORT=$CHE_PORT codenvy/che-launcher start)
+		RENAME_RESULT=$(docker rename che-server $1)
+		echo "Container successfully created"
+	fi
+}
 
-. /etc/environment
+#----------------------------------Stops the user che container-------------------------------------------#
+function stop
+{
+	STOP_RESULT=$(docker exec -it $1 /bin/bash ./home/user/che/bin/che.sh stop --skip:uid || echo 'lol')
+	echo $STOP_RESULT
+}	
 
-#This command edits the port attribute on the Server tag on eclipse che tomcat
+#----------------------------------------------------------------------------------------------------------#
+#-----------------------------------First parameter,for now, is the name of the user-----------------------#
 
-xmlstarlet edit -L -u "/Server/@port" -v "$TOMCAT_SERVER_PORT" $CHE_PATH/tomcat/conf/server.xml
+if [ $# -lt  2 ]; then
+	echo "Less than 2 arguments were entered"
+	exit 1
+fi
+
+#Checks if the first paramter is specifying the user and the second is not empty
+if [ ! -z $2 ] ; then
+	
+	USER_NAME=$2
+	getIP
+	echo $SCRIPTS_PATH
+	setPorts
+	case "$1" in
+	start)
+		start $USER_NAME
+		;;
+	stop)
+		stop $USER_NAME
+		;;
+esac
+	
+fi
 
 
-#-----------------------------------Executes the che instance for the ip address and port especified-------#
-$CHE_PATH/bin/che.sh run -r:$MACHINE_IP -p:$CHE_PORT
+
+
+
 
 #sed -i -- 's/<Server port="8005" shutdown="SHUTDOWN">/<Server port="'"$tomcat_server_port"'" shutdown="SHUTDOWN">/g' /home/boss/nginx_scripts/#teste.xml
 

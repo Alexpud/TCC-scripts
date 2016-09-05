@@ -24,7 +24,7 @@ function getIP
 function setPorts
 {
 	INC=$(cat $SCRIPTS_PATH/data.txt) #Reads the increment value
-	CHE_PORT=$(expr 8090 + $INC) #New Che port
+	CHE_PORT=$(expr 8080 + $INC) #New Che port
 	echo $(expr $INC + 1) > $SCRIPTS_PATH/data.txt
 }
 
@@ -47,8 +47,7 @@ function start
 	  fi
 	else
 		echo "Attempting to create and run the container"
-		CREATION_RESULT=$(docker run -it -v /var/run/docker.sock:/var/run/docker.sock -e CHE_DATA_FOLDER=/home/user/$1 -e CHE_PORT=$CHE_PORT eclipse/che start)
-		echo CREATION_RESULT
+		CREATION_RESULT=$( docker run -it -v /var/run/docker.sock:/var/run/docker.sock -e CHE_DATA_FOLDER=/home/user/$1 -e CHE_PORT=$CHE_PORT codenvy/che-launcher start)
 		RENAME_RESULT=$(docker rename che-server $1)
 		echo "Container successfully created"
 	fi

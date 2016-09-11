@@ -47,8 +47,8 @@ function start
 	  fi
 	else
 		echo "Attempting to create and run the container"
-		CREATION_RESULT=$( docker run -it -v /var/run/docker.sock:/var/run/docker.sock -e CHE_DATA_FOLDER=/home/user/$1 -e CHE_PORT=$CHE_PORT codenvy/che-launcher start)
-		RENAME_RESULT=$(docker rename che-server $1)
+		docker run -it -v /var/run/docker.sock:/var/run/docker.sock -e CHE_DATA_FOLDER=/home/user/$1 -e CHE_PORT=$2 codenvy/che-launcher start
+		docker rename che-server $1
 		echo "Container successfully created"
 	fi
 }
@@ -72,12 +72,12 @@ fi
 if [ ! -z $2 ] ; then
 	
 	USER_NAME=$2
-	getIP
+	PORT_NUMBER=$3
+	# getIP
 	echo $SCRIPTS_PATH
-	setPorts
 	case "$1" in
 	start)
-		start $USER_NAME
+		start $USER_NAME $PORT_NUMBER
 		;;
 	stop)
 		stop $USER_NAME

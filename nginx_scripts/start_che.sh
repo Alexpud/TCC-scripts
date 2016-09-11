@@ -46,9 +46,10 @@ function start
 	    docker start $1
 	  fi
 	else
-		echo "Attempting to create and run the container"
-		docker run -it -v /var/run/docker.sock:/var/run/docker.sock -e CHE_DATA_FOLDER=/home/user/$1 -e CHE_PORT=$2 codenvy/che-launcher start
-		docker rename che-server $1
+		echo "Attempting to create and run the container $1"
+		CREATION_RESULT=$( docker run -v /var/run/docker.sock:/var/run/docker.sock -e CHE_DATA_FOLDER=/home/user/$1 -e CHE_PORT=$2 codenvy/che-launcher start)
+		RENAME_RESULT=$(docker rename che-server $1)
+		echo $CREATION_RESULT
 		echo "Container successfully created"
 	fi
 }

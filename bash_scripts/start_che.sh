@@ -24,7 +24,7 @@ function getIP
 function setPorts
 {
 	INC=$(cat $SCRIPTS_PATH/data.txt) #Reads the increment value
-	CHE_PORT=$(expr 8090 + $INC) #New Che port
+	CHE_PORT=$(expr 8080 + $INC) #New Che port
 	echo $(expr $INC + 1) > $SCRIPTS_PATH/data.txt
 }
 
@@ -46,10 +46,11 @@ function start
 	    docker start $1
 	  fi
 	else
-		echo "Attempting to create and run the container"
-		CREATION_RESULT=$(docker run -it -v /var/run/docker.sock:/var/run/docker.sock -e CHE_DATA_FOLDER=/home/user/$1 -e CHE_PORT=$CHE_PORT eclipse/che start)
-		echo CREATION_RESULT
+		echo $MACHINE_IP
+		echo "Attempting to create and run the container $1"
+		CREATION_RESULT=$( docker run -v /var/run/docker.sock:/var/run/docker.sock -e CHE_HOST_IP=$MACHINE_IP -e CHE_DATA_FOLDER=/home/user/$1 -e CHE_PORT=$2 codenvy/che-launcher start)
 		RENAME_RESULT=$(docker rename che-server $1)
+		echo $CREATION_RESULT
 		echo "Container successfully created"
 	fi
 }
@@ -73,12 +74,12 @@ fi
 if [ ! -z $2 ] ; then
 	
 	USER_NAME=$2
+	PORT_NUMBER=$3
 	getIP
 	echo $SCRIPTS_PATH
-	setPorts
 	case "$1" in
 	start)
-		start $USER_NAME
+		start $USER_NAME $PORT_NUMBER
 		;;
 	stop)
 		stop $USER_NAME
@@ -93,5 +94,6 @@ fi
 
 
 #sed -i -- 's/<Server port="8005" shutdown="SHUTDOWN">/<Server port="'"$tomcat_server_port"'" shutdown="SHUTDOWN">/g' /home/boss/nginx_scripts/#teste.xml
+
 
 

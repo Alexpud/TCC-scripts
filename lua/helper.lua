@@ -31,29 +31,37 @@ function db_functions.new(id)
         ngx.log(ngx.ERR,"failed to connect: ", err, ": ", errcode, " ", sqlstate)
         return
     end
-    ngx.say("conectou")
 end
 
 --Kind of incomplete. The idea was to remove the lua code from che.conf file, but doing that makes us build a wrapper module.
 --which would abstract the operations on the database using lua, but that takes a lot of time to do. So lets see what is going to happen.
 function db_functions.insert(table,collumn,value)
 	res, err, errcode, sqlstate = db:query("insert into "..table.." ("..collumn..") values (\'" ..value.. "\')")
-	ngx.say(res)
 	if not res then
     	ngx.log(ngx.ERR,"Error inserting the new user: ", err, ": ", errcode, ":",sqlstate, ".")
-       	return "Error"
+      return "Error"
  	end
 end
 
 function db_functions.search(table,collumn,comparison_collumn,value)
-	res, err, errcode, sqlstate = db:query("select "..collumn.." from "..table.." where "..comparison_collumn"=\'" ..value.."\'")
-    if not res then
-   		ngx.log(ng.ERR,"Error on query for container matching the id on the url: ", err, ": ", errcode, ": ", sqlstate, ".")
-       	return "Error"
-    end
+	res, err, errcode, sqlstate = db:query("select "..collumn.." from "..table.." where "..comparison_collumn.."=\'" ..value.."\'")
+  if not res then
+   	ngx.log(ng.ERR,"Error on query for container matching the id on the url: ", err, ": ", errcode, ": ", sqlstate, ".")
+    return "Error"
+  end
+
+  return res
 end
 
-function db_functions.query()
+function db_functions.getNrows()
+  res, err, errcode, sqlstate = db:query("show table status")
+  local nRows = tonumber(res[1].Rows)
+  if not res then
+    ngx.log(ng.ERR,"Error on query table status: ", err, ": ", errcode, ": ", sqlstate, ".")
+    return "Error"
+  end
+
+  return nRows
 end
 
 return db_functions

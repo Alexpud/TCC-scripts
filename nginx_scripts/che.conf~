@@ -1,0 +1,106 @@
+limit_req_zone 127.0.0.1 zone=one:10m rate=1r/m;
+server
+{
+    listen 8084;
+    access_log /usr/local/openresty/nginx/logs/access.log;
+    error_log  /usr/local/openresty/nginx/logs/error.log;
+    error_log  /usr/local/openresty/nginx/logs/error.log  notice;
+    error_log  /usr/local/openresty/nginx/logs/error.log  info;
+    set $TESTE 'asda';
+    location /
+    {
+        proxy_pass http://10.27.160.124:8103;
+    }
+
+}
+
+server
+{
+    keepalive_timeout 65;
+    listen 8082;
+    location /
+    {
+        default_type text/html;
+        content_by_lua
+        '
+            local db = require("helper")
+            db.new("alexadre")
+            db.insert("Containers","Registration_ID","mnoela")
+            ngx.say(db.getNrows())   
+        ';
+    }
+}
+
+#MYSQLs
+
+server
+{
+    listen 8086;
+    set $PORT "";
+    location ~* /(\w+)$
+    {
+        default_type text/html;
+        rds_json_root rows;
+        set $USER $1;
+
+        rewrite_by_lua '
+            
+            local shell = require("resty.shell")
+            local args = 
+            {
+                socket = "unix:/tmp/nginx.sock",
+            }
+
+            local db = require "helper"
+            local user_id = ngx.var.USER -- Grabs the user name from the URL
+            db.new(user_id)
+
+            --Checks if the table is empty
+
+            nRows = db.getNrows()
+
+            --If the table is empty
+            if nRows == 0 then
+                db.insert("Containers","Registration_ID",user_id)
+                
+                res = db.search("Containers","Container_Port","Registration_ID",user_id)
+
+                che_port = res[1].Container_Port
+
+            else
+
+                -- Searches in the database for a row indicating the existence of a container belonging to the user. --   It uses the parameter in the url as a key in the search, matching it with registration_id.
+
+                res = db.search("Containers","*","Registration_ID",user_id)
+
+                -- Query result equals to zero, that indicates that a container belonging to the user does not exist
+                if #res == 0 then
+                    
+                    -- A row was found in the table, so users already exist 
+                    -- So it does the following:
+                    -- 1 - Obtain the biggest port value
+                    -- 2 - Increase it by one and store it on the variable che_port
+                    -- 3 - Use it as port value for the container belonging to the user attempting to use the service.
+
+                    db.insert("Containers","Registration_ID",user_id)
+
+                    res = db.search("Containers","Container_Port","Registration_ID",user_id)
+
+                    che_port = res[1].Container_Port
+                    
+                else    
+                    che_port = res[1].Container_Port
+                end                
+            end
+            local status, out, err = shell.execute("./usr/local/openresty/nginx/src/che/start_che.sh start "..user_id.." "..che_port, args)
+            ngx.var.PORT = che_port;
+        ';
+        echo_blocking_sleep 600;
+        echo "Testee porra";
+        proxy_connect_timeout       300;
+        proxy_send_timeout          300;
+        proxy_read_timeout          300;
+        send_timeout                300;
+        proxy_pass http://10.1.1.9:$PORT;
+    }
+}

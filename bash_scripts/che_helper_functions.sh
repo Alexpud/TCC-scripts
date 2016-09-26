@@ -14,6 +14,7 @@ SCRIPTS_PATH=$(pwd)
 function getIP
 {
 	MACHINE_IP=$(ip route get 1 | awk '{print $NF;exit}')
+	echo "http://$MACHINE_IP"
 }
 
 #----------------------------------------------------------------------------------------------------------#
@@ -28,6 +29,44 @@ function setPorts
 	echo $(expr $INC + 1) > $SCRIPTS_PATH/data.txt
 }
 
+#----------------------------------------------------------------------------------------------------------#
+
+#----------------------------------------------------------------------------------------------------------#
+#Docker function made based on gist made by Erik Kristensen found on https://gist.github.com/ekristen/11254304#
+#-------------------------------------------------------------------------------------#
+# ----------------Author: Erik Kristensen                                             #
+# ----------------Email: erik@erikkristensen.com                                      #
+# ----------------License: MIT                                                        #
+# ----------------Nagios Usage: check_nrpe!check_docker_container!_container_id_      #
+# ----------------Usage: ./check_docker_container.sh _container_id_                   #
+#                                                                                     #
+# ----------------The script checks if a container is running.                        #
+# ----------------  OK - running                                                      #
+# ----------------  WARNING - container is ghosted                                    #
+# ----------------  CRITICAL - container is stopped                                   #
+# ----------------  UNKNOWN - does not exists                                         #
+#-------------------------------------------------------------------------------------#
+function check_docker_container
+{
+	CONTAINER=$1
+
+	RUNNING=$(docker inspect --format="{{ .State.Running }}" $CONTAINER 2> /dev/null)
+
+	if [ $? -eq 1 ]; then
+	  echo "UNKNOWN - $CONTAINER does not exist."
+	  exit 3
+	fi
+
+	if [ "$RUNNING" == "false" ]; then
+	  echo "CRITICAL - $CONTAINER is not running."
+	  exit 2
+	fi
+
+	STARTED=$(docker inspect --format="{{ .State.StartedAt }}" $CONTAINER)
+	NETWORK=$(docker inspect --format="{{ .NetworkSettings.IPAddress }}" $CONTAINER)
+
+	echo "OK - $CONTAINER is running. IP: $NETWORK, StartedAt: $STARTED"
+}
 #----------------------------------------------------------------------------------------------------------#
 
 #----------------------------------Starts the user che container-------------------------------------------#
@@ -65,35 +104,33 @@ function stop
 #----------------------------------------------------------------------------------------------------------#
 #-----------------------------------First parameter,for now, is the name of the user-----------------------#
 
-if [ $# -lt  2 ]; then
-	echo "Less than 2 arguments were entered"
-	exit 1
-fi
 
-#Checks if the first paramter is specifying the user and the second is not empty
-if [ ! -z $2 ] ; then
-	
-	USER_NAME=$2
-	PORT_NUMBER=$3
+if [ $1 == "getIP" ]; then
 	getIP
-	echo $SCRIPTS_PATH
-	case "$1" in
-	start)
-		start $USER_NAME $PORT_NUMBER
-		;;
-	stop)
-		stop $USER_NAME
-		;;
-esac
-	
+
+else
+
+	if [ $# -lt  2 ]; then
+		echo "Less than 2 arguments were entered"
+		exit 1
+	fi
+
+	#Checks if the first paramter is specifying the user and the second is not empty
+	if [ ! -z $2 ] ; then
+		
+		USER_NAME=$2
+		PORT_NUMBER=$3
+		getIP
+		echo $SCRIPTS_PATH
+		case "$1" in
+			start)
+				start $USER_NAME $PORT_NUMBER
+				;;
+			stop)
+				stop $USER_NAME
+				;;
+		esac
+		
+	fi
 fi
-
-
-
-
-
-
-#sed -i -- 's/<Server port="8005" shutdown="SHUTDOWN">/<Server port="'"$tomcat_server_port"'" shutdown="SHUTDOWN">/g' /home/boss/nginx_scripts/#teste.xml
-
-
 

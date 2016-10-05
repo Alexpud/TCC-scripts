@@ -87,7 +87,7 @@ function start
 	else
 		echo $MACHINE_IP
 		echo "Attempting to create and run the container $1"
-		CREATION_RESULT=$( docker run -v /var/run/docker.sock:/var/run/docker.sock -e CHE_HOST_IP=$MACHINE_IP -e CHE_DATA_FOLDER=/home/user/$1 -e CHE_PORT=$2 codenvy/che-launcher start)
+		CREATION_RESULT=$( docker run -v /var/run/docker.sock:/var/run/docker.sock -e CHE_HOST_IP=$MACHINE_IP -e CHE_DATA_FOLDER=/home/user/$1 -e CHE_PORT=$2 eclipse/che start)
 		RENAME_RESULT=$(docker rename che-server $1)
 		echo $CREATION_RESULT
 		echo "Container successfully created"
@@ -122,6 +122,7 @@ else
 		PORT_NUMBER=$3
 		getIP
 		echo $SCRIPTS_PATH
+        echo $PORT_NUMBER
 		case "$1" in
 			start)
 				start $USER_NAME $PORT_NUMBER

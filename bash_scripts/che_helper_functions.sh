@@ -53,19 +53,17 @@ function check_docker_container
 	RUNNING=$(docker inspect --format="{{ .State.Running }}" $CONTAINER 2> /dev/null)
 
 	if [ $? -eq 1 ]; then
-	  echo "UNKNOWN - $CONTAINER does not exist."
-	  exit 3
-	fi
+		echo 3
 
-	if [ "$RUNNING" == "false" ]; then
-	  echo "CRITICAL - $CONTAINER is not running."
-	  exit 2
-	fi
-
-	STARTED=$(docker inspect --format="{{ .State.StartedAt }}" $CONTAINER)
-	NETWORK=$(docker inspect --format="{{ .NetworkSettings.IPAddress }}" $CONTAINER)
-
-	echo "OK - $CONTAINER is running. IP: $NETWORK, StartedAt: $STARTED"
+	else
+        if [ "$RUNNING" == "false" ]; then
+		    echo 2
+	    else
+		    STARTED=$(docker inspect --format="{{ .State.StartedAt }}" $CONTAINER)
+		    NETWORK=$(docker inspect --format="{{ .NetworkSettings.IPAddress }}" $CONTAINER)
+		    echo 1
+	    fi
+    fi
 }
 #----------------------------------------------------------------------------------------------------------#
 
@@ -87,7 +85,7 @@ function start
 	else
 		echo $MACHINE_IP
 		echo "Attempting to create and run the container $1"
-		CREATION_RESULT=$( docker run -v /var/run/docker.sock:/var/run/docker.sock -e CHE_HOST_IP=$MACHINE_IP -e CHE_DATA_FOLDER=/home/user/$1 -e CHE_PORT=$2 eclipse/che start)
+		CREATION_RESULT=$( docker run -v /var/run/docker.sock:/var/run/docker.sock -e CHE_HOST_IP=$MACHINE_IP -e CHE_DATA_FOLDER=/home/user/$1 -e CHE_PORT=$2 codenvy/che-launcher start)
 		RENAME_RESULT=$(docker rename che-server $1)
 		echo $CREATION_RESULT
 		echo "Container successfully created"
@@ -120,9 +118,6 @@ else
 		
 		USER_NAME=$2
 		PORT_NUMBER=$3
-		getIP
-		echo $SCRIPTS_PATH
-        echo $PORT_NUMBER
 		case "$1" in
 			start)
 				start $USER_NAME $PORT_NUMBER
@@ -130,8 +125,11 @@ else
 			stop)
 				stop $USER_NAME
 				;;
+			status)
+				check_docker_container $USER_NAME
+				;;
 		esac
 		
 	fi
 fi
-
+		
